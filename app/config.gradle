@@ -1,0 +1,45 @@
+//tinker
+def tinkerLib = [
+        implementation     : 'com.tencent.tinker:tinker-android-lib:1.9.2',
+        provided           : 'com.tencent.tinker:tinker-android-anno:1.9.2',
+        annotationProcessor: 'com.tencent.tinker:tinker-android-anno:1.9.2'
+]
+
+ext {
+    androidConfig = [
+            versionCode: 1,
+            versionName: '1.0',
+    ]
+    //依赖配置
+    dependenciesConfig = [
+            implementationLib: [
+                    fileTree(include: ['*.jar'], dir: 'libs'),
+                    'com.android.support:appcompat-v7:27.1.1',
+                    'com.android.support.constraint:constraint-layout:1.1.0',
+                    tinkerLib.implementation,
+                    project(':TinkerLib')
+            ],
+            providedLib: [
+                    tinkerLib.provided
+            ],
+            annotationLib: [
+                    tinkerLib.annotationProcessor
+            ]
+    ]
+    //渠道配置
+
+    //基本不需要变动的配置
+    androidDefualtConfig = [
+            compileSdkVersion: 27,
+            applicationId    : 'com.example.jimi_wu.test',
+            minSdkVersion    : 15,
+            targetSdkVersion : 27,
+    ]
+    //签名配置
+    signingConfig = [
+            storeFile    : file('../test.jks'),
+            storePassword: '123456',
+            keyAlias     : 'key0',
+            keyPassword  : '123456'
+    ]
+}

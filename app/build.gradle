@@ -1,0 +1,65 @@
+apply plugin: 'com.android.application'
+apply from: './config.gradle'
+def androidConfig = ext.androidConfig
+def dependenciesConfig = ext.dependenciesConfig
+def androidDefualtConfig = ext.androidDefualtConfig
+def mSigningConfig = ext.signingConfig
+
+apply from: "${rootDir}/TinkerLib/TinkerLib.gradle"
+def mTinkerVersion = ext.mTinkerVersion
+
+android {
+    compileSdkVersion androidDefualtConfig.compileSdkVersion
+    defaultConfig {
+        applicationId androidDefualtConfig.applicationId
+        minSdkVersion androidDefualtConfig.minSdkVersion
+        targetSdkVersion androidDefualtConfig.targetSdkVersion
+        versionCode androidConfig.versionCode
+        versionName androidConfig.versionName
+
+        buildConfigField("String", "TINKER_VERSION", "\"${mTinkerVersion}\"")
+    }
+    signingConfigs {
+        release {
+            storeFile mSigningConfig.storeFile		//该方法只能在signingConfigs里配置
+            storePassword mSigningConfig.storePassword
+            keyAlias mSigningConfig.keyAlias
+            keyPassword mSigningConfig.keyPassword
+        }
+    }
+    buildTypes {
+        release {
+            minifyEnabled true
+            signingConfig signingConfigs.release
+            proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
+        }
+        debug {
+            signingConfig signingConfigs.release
+        }
+    }
+
+    flavorDimensions "channel"
+    productFlavors {
+        yingyongbao {
+            dimension "channel"
+        }
+        xiaomi {
+            dimension "channel"
+        }
+        wandoujia {
+            dimension "channel"
+        }
+    }
+}
+dependencies {
+    //用循环从依赖配置里获得库后依赖
+    for(def lib: dependenciesConfig.providedLib) {
+        provided lib
+    }
+    for(def lib: dependenciesConfig.annotationLib) {
+        annotationProcessor lib
+    }
+    for(def lib: dependenciesConfig.implementationLib) {
+        implementation lib
+    }
+}

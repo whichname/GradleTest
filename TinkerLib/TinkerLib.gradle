@@ -1,0 +1,41 @@
+/**
+ * @Description
+ * TinkerLib入口脚本
+ *
+ * @author wuzhiming
+ * @time 2018/04/27
+ */
+
+
+
+ext {
+    mVersionName= project.androidConfig.versionName
+    mTinkerId= mVersionName
+    mTinkerVersion= "1.0"
+    //是否多渠道
+    mHasFlavors = true
+
+    //输出目录
+    mOutputPath= "${rootDir}/release/v${mVersionName}/"
+    //基准包输出目录
+    mBaseApkPath= "${mOutputPath}BaseApk/" + (mHasFlavors? "flavorName/": "")
+    //基准apk名称
+    mBaseApkName= "${rootProject.name}-v${mVersionName}" + (mHasFlavors?"-flavorName": "") + ".apk"
+    //补丁包输出目录
+    mPatchPath= "${mOutputPath}tinker-version-${mTinkerVersion}/" + (mHasFlavors? "flavorName/": "")
+
+    //打包历史输出目录文件
+    mHistoryPath= "${rootDir}/release/list/"+(mHasFlavors? "flavorName/": "")+"list.json"
+
+    //渠道
+    flavors= new ArrayList<>()
+}
+
+//加载tinker
+apply from: "${rootDir}/TinkerLib/tinker.gradle"
+//加载release/releaseFlavor
+if(project.ext.mHasFlavors) {
+    apply from: "${rootDir}/TinkerLib/releaseFlavor.gradle"
+} else {
+    apply from: "${rootDir}/TinkerLib/release.gradle"
+}

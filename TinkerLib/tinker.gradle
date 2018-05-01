@@ -1,0 +1,111 @@
+/**
+ * @Description
+ * tinker配置
+ *
+ * @author wuzhiming
+ * @time 2018/04/27
+ */
+
+
+// tinker的配置
+def tinkerConfig = [
+        // 是否打开tinker
+        tinkerEnable  : true,
+        // 基准(旧)apk的路径
+        oldApk        : ext.mBaseApkPath + ext.mBaseApkName,
+        // 新apk的路径，若不为空，将不再编译新apk，而是使用该路径下的apk与基准apk生成补丁
+        // newApk: null,
+        // 补丁的输出路径
+        // outputFolder  : null,
+        // 是否忽略警告信息，建议不
+        ignoreWarning : false,
+        // tinker自动帮补丁包签名，推荐开启
+        useSign       : true,
+        // buildConfig
+        buildConfig   : [
+                // 保持基准apk的混淆方式，可不填
+                applyMapping           : "${ext.mBaseApkPath}/mapping.txt",
+                // 通过旧apk的R.txt保持ResId的分配，减少补丁包大小，避免由于ResId改变导致remote view异常
+                applyResourceMapping   : "${ext.mBaseApkPath}/R.txt",
+                // tinkerId, 很重要，决定补丁包能运行在哪些基准包上
+                tinkerId               : ext.mTinkerId,
+                // 如果我们有多个dex,编译补丁时可能会由于类的移动导致变更增多。若打开keepDexApply模式，补丁包将根据基准包的类分布来编译。
+                keepDexApply           : false,
+                // 加固模式，只能用于加固应用中
+                isProtectedApp         : false,
+                // 是否支持新增非export的Activity, 1.9.0版本新增功能
+                supportHotplugComponent: false,
+        ],
+        // dexConfig
+        dexConfig     : [
+                // 只能是jar或raw，一般情况选择jar
+                dexMode: 'jar',
+                // 需要处理的dex的相对安装包的路径
+                pattern: ["classes*.dex", "assets/secondary-dex-?.jar"],
+                // 其实就是你不想被tinker更改或无法更改的类，gradle1.7.6之后，如果没有自定义TinkerLoader，基本不用填
+                loader : [],
+        ],
+        // libConfig
+        libConfig     : [
+                // 需要处理的lib的相对安装包的路径
+                pattern: ["lib/*/*.so"],
+        ],
+        // resConfig
+        resConfig     : [
+                // 需要处理的res的相对安装包的路径
+                pattern     : ["res/*", "assets/*", "resources.arsc", "AndroidManifest.xml"],
+                // 忽略上面的pattern里的文件的修改
+                ignoreChange: [],
+                // 对于修改的资源，如果大于largeModSize，将使用bsdiff算法。这可以降低补丁包的大小，但是会增加合成时的复杂度。默认大小为100kb
+                largeModSize: 100,
+        ],
+        // packageConfig
+        packageConfig : [
+                // 这一项建议不填
+                // configField: TINKER_ID, NEW_TINKER_ID
+        ],
+        // 7zip压缩配置，执行前提是useSign为true
+        sevenZipConfig: [
+                // 自动根据机器属性获得对应的7za运行文件
+                zipArtifact: 'com.tencent.mm:SevenZip:1.1.10',
+                // 系统中的7za路径
+                path       : '',
+        ],
+]
+
+//tinker配置
+if (tinkerConfig.tinkerEnable) {
+    apply plugin: 'com.tencent.tinker.patch'
+    tinkerPatch {
+        oldApk = tinkerConfig.oldApk
+        ignoreWarning = tinkerConfig.ignoreWarning
+        useSign = tinkerConfig.useSign
+        tinkerEnable = tinkerConfig.tinkerEnable
+        buildConfig {
+            applyMapping = tinkerConfig.buildConfig.applyMapping
+            applyResourceMapping = tinkerConfig.buildConfig.applyResourceMapping
+            tinkerId = tinkerConfig.buildConfig.tinkerId
+            keepDexApply = tinkerConfig.buildConfig.keepDexApply
+            isProtectedApp = tinkerConfig.buildConfig.isProtectedApp
+            supportHotplugComponent = tinkerConfig.buildConfig.supportHotplugComponent
+        }
+        dex {
+            dexMode = tinkerConfig.dexConfig.dexMode
+            pattern = tinkerConfig.dexConfig.pattern
+            loader = tinkerConfig.dexConfig.loader
+        }
+        lib {
+            pattern = tinkerConfig.libConfig.pattern
+        }
+        res {
+            pattern = tinkerConfig.resConfig.pattern
+            ignoreChange = tinkerConfig.resConfig.ignoreChange
+            largeModSize = tinkerConfig.resConfig.largeModSize
+        }
+        packageConfig {
+        }
+        sevenZip {
+            zipArtifact = tinkerConfig.sevenZipConfig.zipArtifact
+        }
+    }
+}

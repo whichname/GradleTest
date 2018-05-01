@@ -1,0 +1,47 @@
+-----------------------Tinker patch begin-----------------------
+configuration: 
+oldApk:/Users/wuzhiming/Documents/android_projects/Test/release/v1.0/BaseApk/xiaomi//Test-v1.0-xiaomi.apk
+newApk:/Users/wuzhiming/Documents/android_projects/Test/app/build/outputs/apk/xiaomi/release/app-xiaomi-release.apk
+outputFolder:/Users/wuzhiming/Documents/android_projects/Test/app/build/outputs/apk/xiaomi/tinkerPatch/xiaomi/release
+isIgnoreWarning:false
+isProtectedApp:false
+7-ZipPath:/Users/wuzhiming/.gradle/caches/modules-2/files-2.1/com.tencent.mm/SevenZip/1.1.10/cc390e6c704b74496d9ba0e9b46d2cf8a2a96b84/SevenZip-1.1.10-osx-x86_64.exe
+useSignAPk:true
+package meta fields: 
+dex configs: 
+dexMode: jar
+dexPattern:classes.*\.dex
+dexPattern:assets/secondary-dex-.\.jar
+dex loader:com.example.jimi_wu.test.TestApplication
+dex loader:com.tencent.tinker.loader.*
+lib configs: 
+libPattern:lib/.*/.*\.so
+resource configs: 
+resPattern:res/.*
+resPattern:AndroidManifest\.xml
+resPattern:assets/.*
+resPattern:resources\.arsc
+largeModSize:100kb
+useApplyResource:true
+
+Analyze old and new apk files:
+old apk: Test-v1.0-xiaomi.apk, size=992047, md5=cb122e396abc1bb2a5ebab8fd1ec3fbe
+new apk: app-xiaomi-release.apk, size=992055, md5=bf951cb59ceaeb025790d0cb7cf4a1ed
+
+Manifest has no changes, skip rest decode works.
+UnZipping apk to /Users/wuzhiming/Documents/android_projects/Test/app/build/outputs/apk/xiaomi/tinkerPatch/xiaomi/release/Test-v1.0-xiaomi
+UnZipping apk to /Users/wuzhiming/Documents/android_projects/Test/app/build/outputs/apk/xiaomi/tinkerPatch/xiaomi/release/app-xiaomi-release
+found modify resource: resources.arsc, but it is logically the same as original new resources.arsc, just ignore!
+Check for loader classes in dex: classes.dex
+No dexes were changed, nothing needs to be done next.
+Generate unsigned apk: patch_unsigned.apk
+Signing apk: patch_signed.apk
+Signing key algorithm is SHA1withRSA
+Try use 7za to compress the patch file: patch_signed_7zip.apk, will cost much more time
+Current 7za path:/Users/wuzhiming/.gradle/caches/modules-2/files-2.1/com.tencent.mm/SevenZip/1.1.10/cc390e6c704b74496d9ba0e9b46d2cf8a2a96b84/SevenZip-1.1.10-osx-x86_64.exe
+Result: final signed patch result: /Users/wuzhiming/Documents/android_projects/Test/app/build/outputs/apk/xiaomi/tinkerPatch/xiaomi/release/patch_signed.apk, size=2008
+Result: final signed with 7zip patch result: /Users/wuzhiming/Documents/android_projects/Test/app/build/outputs/apk/xiaomi/tinkerPatch/xiaomi/release/patch_signed_7zip.apk, size=2333
+Warning: patch_signed_7zip.apk is bigger than patch_signed.apk 325 byte, you should choose patch_signed.apk at these time!
+Tinker patch done, total time cost: 1.630000s
+Tinker patch done, you can go to file to find the output /Users/wuzhiming/Documents/android_projects/Test/app/build/outputs/apk/xiaomi/tinkerPatch/xiaomi/release
+-----------------------Tinker patch end-------------------------

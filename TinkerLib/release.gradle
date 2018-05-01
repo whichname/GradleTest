@@ -1,0 +1,158 @@
+/**
+ * @Description
+ * 单渠道打包
+ *
+ * @author wuzhiming
+ * @time 2018/04/27
+ */
+
+
+def mVersionName = project.ext.mVersionName
+def mTinkerId = project.ext.mTinkerId
+def mTinkerVersion = project.ext.mTinkerVersion
+
+def mOutputPath = project.ext.mOutputPath
+def mBaseApkPath = project.ext.mBaseApkPath
+def mBaseApkName = project.ext.mBaseApkName
+def mPatchPath = project.ext.mPatchPath
+def mHistoryPath = project.ext.mHistoryPath
+
+
+/**
+ * history文件的数据结构
+ */
+class BaseApk {
+    String versionName  //版本名
+    String lastApkPath  //最新的apk的地址
+    Patch patch //补丁包数组
+    static class Patch {
+        String baseTinkerId  //基准包TinkerId
+        String lastedPatchTinkerVersion   //最新的补丁的TinkerVersion
+        String lastedPatchPath  //最新的补丁地址
+    }
+}
+
+/**
+ *  使用命令行运行assembleRelease时:
+ *  运行assembleRelease前，校验文件是否已存在
+ *  运行assembleRelease后，自动把生成的apk、mapping.txt、R.txt拷贝到基准apk目录下
+ */
+project.afterEvaluate { //在建立有向图之后，才能找到对应的task
+    //不是使用assembleRelease命令运行的，不做出来，比如打补丁包
+    if (!project.gradle.startParameter.taskNames.contains("assembleRelease")) return
+
+    tasks.getByName("assembleRelease") {
+        it.doFirst {
+            println "开始打基准包..."
+            println "开始校验基准包版本....."
+            //做校验，如果版本号存在，中断
+            if (new File(mOutputPath).exists()) {
+                println "该版本基准apk已存在，打包任务停止"
+                assert false
+            }
+            println "校验通过，开始打包..."
+        }
+        it.doLast {
+            println "打包完成，开始复制文件，目录路径为：${mBaseApkPath}"
+            println "开始复制apk文件，并更名为：${mBaseApkName}"
+            copy {
+                from "${buildDir}/outputs/apk/release/app-release.apk"
+                into mBaseApkPath
+                rename { String name ->
+                    return mBaseApkName
+                }
+            }
+            println "开始复制mapping.txt文件..."
+            copy {
+                from "${buildDir}/outputs/mapping/release/mapping.txt"
+                into mBaseApkPath
+            }
+            println "开始复制R.txt文件..."
+            copy {
+                from "${buildDir}/intermediates/symbols/release/R.txt"
+                into mBaseApkPath
+            }
+            println "开始写入记录文件..."
+            //写入配置文件
+            File confFile = new File(mHistoryPath)
+            if(!confFile.exists()) {
+                confFile.getParentFile().mkdirs()
+                confFile.write("[]")
+            }
+            ArrayList rootArray = new groovy.json.JsonSlurper().parse(confFile)
+            def baseApk = new BaseApk()
+            rootArray.add(baseApk)
+            baseApk.versionName = mVersionName
+            baseApk.lastApkPath = mBaseApkPath.substring("${rootDir}".length(), mBaseApkPath.length())+mBaseApkName
+            confFile.write(new groovy.json.JsonOutput().toJson(rootArray))
+            println "打包完成"
+        }
+    }
+}
+
+/**
+ *  使用命令行运行tinkerPatchRelease时:
+ *  运行tinkerPatchRelease前，校验基准包和补丁包
+ *  运行tinkerPatchRelease后，把生成的patch_signed.apk拷贝到输出目录
+ */
+project.afterEvaluate {
+    //不是用的tinkerPatchRelease命令运行，也就是并不是要打补丁包
+    if (!project.gradle.startParameter.taskNames.contains("tinkerPatchRelease")) return
+
+    tasks.getByName("tinkerPatchRelease") {
+        it.doFirst {
+            println "开始打补丁包...当前基准包版本: ${mVersionName}...当前补丁包版本: ${mTinkerVersion}"
+            println "开始校验基准包是否存在....."
+            //如果基准包号不存在，中断
+            if (!(new File(mBaseApkPath+mBaseApkName).exists())) {
+                println "基准包不存在，打包中断"
+                assert false
+            }
+            println "基准包校验通过，开始校验补丁包版本..."
+            if(new File(mPatchPath).exists()) {
+                println "该版本补丁包已存在，打包中断"
+                assert false
+            }
+            println "补丁包版本校验通过，开始打包..."
+        }
+        it.doLast {
+            println "打包完成，开始复制文件，目录路径为：${mPatchPath}"
+            println "开始复制补丁apk文件..."
+            copy {
+                from "${buildDir}/outputs/apk/tinkerPatch/release/patch_signed_7zip.apk"
+                into mPatchPath
+            }
+            println "开始复制log文件..."
+            copy {
+                from "${buildDir}/outputs/apk/tinkerPatch/release/log.txt"
+                into mPatchPath
+            }
+            println "开始写入记录文件..."
+            //写入配置文件
+            File confFile = new File(mHistoryPath)
+            if(!confFile.exists()) {
+                println "配置文件不存在"
+                assert false
+            }
+            ArrayList rootArray = new groovy.json.JsonSlurper().parse(confFile)
+            def baseApk
+            for(int i=0;i<rootArray.size();i++) {
+                if(rootArray[i].versionName.equals(mVersionName)) {
+                    baseApk = rootArray[i]
+                    break
+                }
+            }
+            if(baseApk == null) {
+                println "配置文件不完整"
+                assert false
+            }
+            def patch = new BaseApk.Patch()
+            patch.baseTinkerId = mTinkerId
+            patch.lastedPatchTinkerVersion = mTinkerVersion
+            patch.lastedPatchPath = mPatchPath.substring("${rootDir}".length(), mPatchPath.length())+"patch_signed_7zip.apk"
+            baseApk.patch = patch
+            confFile.write(new groovy.json.JsonOutput().toJson(rootArray))
+            println "打包完成"
+        }
+    }
+}
